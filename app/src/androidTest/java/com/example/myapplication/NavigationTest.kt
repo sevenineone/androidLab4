@@ -6,11 +6,10 @@ import androidx.test.core.app.launchActivity
 import androidx.test.espresso.Espresso.*
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
-import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.espresso.assertion.ViewAssertions.matches
-import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
+import androidx.test.espresso.matcher.ViewMatchers.*
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -34,19 +33,19 @@ class NavigationTest {
             .check(matches(isDisplayed()))
     }
 
-    fun isDisplayedCheck(id: Int) {
+    private fun isDisplayedCheck(id: Int) {
         onView(withId(id)).check(matches(isDisplayed()))
     }
 
-    fun doesNotExistsCheck(id: Int) {
+    private fun doesNotExistsCheck(id: Int) {
         onView(withId(id)).check(doesNotExist())
     }
 
-    fun clickButton(id: Int) {
+    private fun clickButton(id: Int) {
         onView(withId(id)).perform(click())
     }
 
-    fun firstFragmentExists() {
+    private fun firstFragmentExists() {
         isDisplayedCheck(R.id.activity_main)
         isDisplayedCheck(R.id.fragment1)
         doesNotExistsCheck(R.id.bnToFirst)
@@ -54,7 +53,7 @@ class NavigationTest {
         doesNotExistsCheck(R.id.bnToThird)
     }
 
-    fun secondFragmentExists() {
+    private fun secondFragmentExists() {
         isDisplayedCheck(R.id.activity_main)
         isDisplayedCheck(R.id.fragment2)
         isDisplayedCheck(R.id.bnToFirst)
@@ -62,7 +61,7 @@ class NavigationTest {
         isDisplayedCheck(R.id.bnToThird)
     }
 
-    fun thirdFragmentExists() {
+    private fun thirdFragmentExists() {
         isDisplayedCheck(R.id.activity_main)
         isDisplayedCheck(R.id.fragment3)
         isDisplayedCheck(R.id.bnToFirst)
@@ -70,7 +69,7 @@ class NavigationTest {
         doesNotExistsCheck(R.id.bnToThird)
     }
 
-    fun aboutExists() {
+    private fun aboutExists() {
         doesNotExistsCheck(R.id.activity_main)
         isDisplayedCheck(R.id.activity_about)
         isDisplayedCheck(R.id.tvAbout)
@@ -174,6 +173,49 @@ class NavigationTest {
     }
 
     @Test
+    fun upNavigationTest() {
+        firstFragmentExists() //1
+        openAbout() //about
+        aboutExists()
+        onView(withContentDescription(R.string.nav_app_bar_navigate_up_description)) //1
+            .perform(click())
+
+        firstFragmentExists()
+        clickButton(R.id.bnToSecond) //2
+        secondFragmentExists()
+        openAbout() //about
+        aboutExists()
+        onView(withContentDescription(R.string.nav_app_bar_navigate_up_description)) //2
+            .perform(click())
+
+        secondFragmentExists()
+        clickButton(R.id.bnToThird) //3
+        thirdFragmentExists()
+        openAbout() //about
+        aboutExists()
+        onView(withContentDescription(R.string.nav_app_bar_navigate_up_description)) //3
+            .perform(click())
+
+        thirdFragmentExists()
+        onView(withContentDescription(R.string.nav_app_bar_navigate_up_description)) //2
+            .perform(click())
+
+        secondFragmentExists()
+        onView(withContentDescription(R.string.nav_app_bar_navigate_up_description)) //1
+            .perform(click())
+
+        firstFragmentExists()
+        try {
+            onView(withContentDescription(R.string.nav_app_bar_navigate_up_description))
+                .perform(click())
+            assert(false)
+        } catch (NoActivityResumedException: Exception) {
+            assert(true)
+        }
+
+    }
+
+    @Test
     fun firstFragmentRotationTest() {
         firstFragmentExists()
         activityRule.scenario.onActivity { activity ->
@@ -218,6 +260,21 @@ class NavigationTest {
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
         thirdFragmentExists()
+    }
+
+    @Test
+    fun aboutRotationTest() {
+        openAbout() //about
+        aboutExists()
+        activityRule.scenario.onActivity { activity ->
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        }
+        Thread.sleep(1000)
+        aboutExists()
+        activityRule.scenario.onActivity { activity ->
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        }
+        aboutExists()
     }
 
 }
